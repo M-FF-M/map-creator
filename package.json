@@ -1,0 +1,13 @@
+{
+  "name": "map-creator",
+  "version": "1.0.0",
+  "description": "Rendering OSM maps to SVG",
+  "main": "index.js",
+  "repository": "https://github.com/M-FF-M/map-creator",
+  "author": "Fabian Michel <fabian-michel@gmx.de>",
+  "license": "MIT",
+  "dependencies": {
+    "mercator-projection": "^0.0.2",
+    "simplify-js": "^1.2.3"
+  }
+}
