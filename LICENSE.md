@@ -25,3 +25,5 @@ The following external libraries are used:
   [BSD-2-Clause](https://opensource.org/licenses/BSD-2-Clause).
 - [mercator-projection](https://www.npmjs.com/package/mercator-projection), published under
   [MIT](https://opensource.org/licenses/MIT).
+- [minimist](https://www.npmjs.com/package/minimist), published under
+  [MIT](https://opensource.org/licenses/MIT).

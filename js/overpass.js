@@ -22,15 +22,14 @@ class OverpassRequest {
           sz += chunk.length;
           const newSz = sz / (1024 * 1024);
           if (Math.ceil(oldSz / 10) > oldSz / 10 && newSz / 10 >= Math.ceil(oldSz / 10))
-            console.log(`Downloaded ${s(sz / (1024 * 1024))} MB so far.`);
+            console.log(`Downloaded ${Files.getSizeStr(sz)} so far.`);
         });
         resp.on('end', () => {
-          console.log(`Download successful (${s(sz / (1024 * 1024))} MB).`);
-          Files.cacheFile('app-data/cache/osm', 'json', data);
-          console.log(`Result cached (${s(sz / (1024 * 1024))} MB).`);
+          console.log(`Download successful (${Files.getSizeStr(sz)}).`);
           resolve(data);
         });
       }).on('error', err => {
+        console.log('Download failed.');
         reject(err);
       });
     });

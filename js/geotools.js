@@ -13,12 +13,12 @@ class GeoTools {
    * @param {number} lat2 latitude of point 2 (in decimal degrees)
    * @param {number} lon2 longitude of point 2 (in decimal degrees)
    * @param {string} [unit] the unit you desire for results
-   *           where: 'M' is statute miles (default)
-   *                  'K' is kilometers
+   *           where: 'M' is statute miles
+   *                  'K' is kilometers (default)
    *                  'N' is nautical miles
    * @return {number} the distance in the desired unit
    */
-  static distance(lat1, lon1, lat2, lon2, unit = 'M') {
+  static distance(lat1, lon1, lat2, lon2, unit = 'K') {
     if ((lat1 == lat2) && (lon1 == lon2)) {
       return 0;
     } else {

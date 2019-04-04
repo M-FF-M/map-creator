@@ -8,3 +8,9 @@ There are two drawbacks however: on the one hand, the file size reaches hundreds
 trying to create a hiking map of a reasonably-sized region results in files of about 1 GB. On the
 other hand, there is no way to influence the scale and neither a ruler nor a legend are part of the
 final map.
+
+## to do
+
+- Fix multipolygon rendering (apparently, ways are not always in the correct order)
+- Create external styling files
+- Add more JSDoc comments
