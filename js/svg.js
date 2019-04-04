@@ -345,15 +345,15 @@ class SVGRenderer {
             || elem.tags.waterway === 'ditch') {
           if (elem.tags.waterway === 'canal') {
             return [
-              { layer: WATER - 1, style:
-                { stroke: '#7d9ba4', fillOpacity: '0', strokeWidth: '0.08', strokeLinecap: 'round', strokeLinejoin: 'round' } },
+              // { layer: WATER - 1, style:
+              //   { stroke: '#7d9ba4', fillOpacity: '0', strokeWidth: '0.08', strokeLinecap: 'round', strokeLinejoin: 'round' } },
               { layer: WATER, style:
-                { stroke: '#abd4e0', fillOpacity: '0', strokeWidth: '0.04', strokeLinecap: 'round', strokeLinejoin: 'round' } }
+                { stroke: '#abd4e0', fillOpacity: '0', strokeWidth: '0.08', strokeLinecap: 'round', strokeLinejoin: 'round' } }
             ];
           } else {
-            let pWidth = 0.06;
+            let pWidth = 0.05;
             if (elem.tags.waterway === 'drain' || elem.tags.waterway === 'ditch') pWidth = 0.03;
-            if (elem.tags.waterway === 'river') pWidth = 0.09;
+            if (elem.tags.waterway === 'river') pWidth = 0.08;
             return [
               { layer: WATER, style:
                 { stroke: '#abd4e0', fillOpacity: '0', strokeWidth: s(pWidth), strokeLinecap: 'round', strokeLinejoin: 'round' } }
