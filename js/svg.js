@@ -76,8 +76,12 @@ class SVGRenderer {
     let { cachedData = null, recacheLvl = 0, cacheData = true, cacheNum = 1 } = cacheSettings;
     if (boundingBox === null)
       boundingBox = JSON.parse(Files.readCacheFile('app-data/cache/bb', 'json', cacheNum));
+    if (osmData === null && recacheLvl>= 1)
+      osmData = JSON.parse(Files.readCacheFile('app-data/cache/osm', 'json', cacheNum));
+    if (cachedData === null && recacheLvl>= 2)
+      cachedData = JSON.parse(Files.readCacheFile('app-data/cache/draw', 'json', cacheNum));
     if (cacheData) {
-      if (recacheLvl >= 1) {
+      if (recacheLvl >= 1 && cacheNum == 1) {
         Files.recacheFile('app-data/cache/osm', 'json');
         console.log('OSM data cache entry created (no changes).');
       } else {
@@ -89,10 +93,6 @@ class SVGRenderer {
       console.log(`Bounding box (${s(boundingBox.ll.lat, 6)}, ${s(boundingBox.ll.lon, 6)}, ${
         s(boundingBox.ur.lat, 6)}, ${s(boundingBox.ur.lon, 6)}) cached.`);
     }
-    if (osmData === null && recacheLvl>= 1)
-      osmData = JSON.parse(Files.readCacheFile('app-data/cache/osm', 'json', cacheNum));
-    if (cachedData === null && recacheLvl>= 2)
-      cachedData = JSON.parse(Files.readCacheFile('app-data/cache/draw', 'json', cacheNum));
 
     const ll = merc.fromLatLngToPoint({ lat: boundingBox.ll.lat, lng: boundingBox.ll.lon });
     const ul = merc.fromLatLngToPoint({ lat: boundingBox.ur.lat, lng: boundingBox.ll.lon });
@@ -120,7 +120,7 @@ class SVGRenderer {
     const data = cachedData !== null ? cachedData : this.getDrawingData(osmData, toMapCoords);
 
     if (cacheData) {
-      if (recacheLvl >= 2) {
+      if (recacheLvl >= 2 && cacheNum == 1) {
         Files.recacheFile('app-data/cache/draw', 'json');
         console.log('Drawing data cache entry created (no changes).');
       } else {
@@ -133,7 +133,7 @@ class SVGRenderer {
     output += '<rect width="100%" height="100%" fill="#f2efe9"/>';
     for (let l = 0; l < data.layers.length; l++) {
       for (let i = 0; i < data.layers[l].length; i++) {
-        output += this.getSVGText(data, data.layers[l][i]);
+        output += this.getSVGText(data, data.layers[l][i], mapWidth, mapHeight);
       }
     }
     output += '</svg>';
@@ -549,11 +549,18 @@ class SVGRenderer {
     return ret;
   }
 
-  getSVGText(data, dataElem) {
+  getSVGText(data, dataElem, mapWidth, mapHeight) {
+    const getPos = coords => {
+      const hPos = coords.x < 0 ? -1 : (coords.x > mapWidth ? 1 : 0);
+      const vPos = coords.y < 0 ? -1 : (coords.y > mapHeight ? 1 : 0);
+      return { h: hPos, v: vPos };
+    };
+
     let output = '';
     if (dataElem.type === 'path' || dataElem.type === 'multipath') {
       output += '<path d="';
       const ways = dataElem.type === 'path' ? [ { pathIdx: dataElem.id, reverse: false } ] : dataElem.ids;
+      let firstPt = null, lastPt = null;
       for (let k = 0; k < ways.length; k++) {
         const path = ways[k].reverse
           ? [...data.paths[ ways[k].pathIdx ]].reverse()
@@ -563,9 +570,25 @@ class SVGRenderer {
           if (ways[k - 1].endIdx == ways[k].startIdx) contPath = true;
         }
         for (let i = 0; i < path.length; i++) {
-          if (i == 0 && !contPath) output += 'M';
-          else output += 'L';
+          if (i == 0 && !contPath) {
+            if (firstPt != null && lastPt != null) {
+              const lastPos = getPos(lastPt);
+              const cPos = getPos(firstPt);
+              if (Math.abs(cPos.h) + Math.abs(cPos.v) == 1 && Math.abs(lastPos.h) + Math.abs(lastPos.v) == 1
+                  && (cPos.h == 0 && lastPos.h != 0 || cPos.v == 0 && lastPos.v != 0)) {
+                const h = cPos.h == 0 ? lastPos.h : cPos.h;
+                const v = cPos.v == 0 ? lastPos.v : cPos.v;
+                const x = h == 1 ? mapWidth + 1 : -1;
+                const y = v == 1 ? mapHeight + 1 : -1;
+                output += (i == 0 && k == 0 ? 'M' : 'L') + `${s(x)} ${s(y)}`;
+              }
+            }
+            firstPt = lastPt = null;
+            output += 'M';
+          } else output += 'L';
           output += `${s(path[i].x)} ${s(path[i].y)}`;
+          if (firstPt === null) firstPt = path[i];
+          lastPt = path[i];
         }
       }
       output += `"${this.toAttribs(dataElem.style)}${ways.length > 1 ? ' fill-rule="evenodd"' : ''} />`;
