@@ -146,7 +146,7 @@ class SVGRenderer {
     let cLayer = 0;
     let BUILDINGS = 0;
     const ROAD_LAYERS = 7;
-    const LAND = cLayer++;
+    cLayer++; const LAND = cLayer++; // land requires two layers
     cLayer++; const WATER = cLayer++; // water requires two layers
     if (this.scale > 5000) BUILDINGS = cLayer++;
     const ROAD_BG = cLayer; cLayer += ROAD_LAYERS;
@@ -318,7 +318,9 @@ class SVGRenderer {
         let innerColor = '#ededed';
         let layerBg = RAIL_BG;
         let layerFg = RAIL_FG;
-        if (elem.tags.railway === 'construction' || elem.tags.railway === 'disused') {
+        if (elem.tags.railway === 'construction' || elem.tags.railway === 'disused'
+            || (elem.tags.service && (elem.tags.service === 'crossover'
+              || elem.tags.service === 'siding'|| elem.tags.service === 'spur'|| elem.tags.service === 'yard'))) {
           outerColor = '#acabab';
           innerColor = '#f2f1f1';
           layerBg -= 2;
@@ -348,8 +350,8 @@ class SVGRenderer {
             || elem.tags.waterway === 'ditch') {
           if (elem.tags.waterway === 'canal') {
             return [
-              // { layer: WATER - 1, style:
-              //   { stroke: '#7d9ba4', fillOpacity: '0', strokeWidth: '0.08', strokeLinecap: 'round', strokeLinejoin: 'round' } },
+              { layer: WATER - 1, style:
+                { stroke: '#7d9ba4', fillOpacity: '0', strokeWidth: '0.12', strokeLinecap: 'round', strokeLinejoin: 'round' } },
               { layer: WATER, style:
                 { stroke: '#abd4e0', fillOpacity: '0', strokeWidth: '0.08', strokeLinecap: 'round', strokeLinejoin: 'round' } }
             ];
@@ -368,17 +370,32 @@ class SVGRenderer {
         if (elem.tags.natural === 'water' || elem.tags.natural === 'spring'
             || elem.tags.natural === 'hot_spring' || elem.tags.natural === 'blowhole')
           return [ { layer: WATER, style: { fill: '#abd4e0' } } ];
-        // if (elem.tags.natural === 'wood' || elem.tags.natural === 'scrub'
-        //     || elem.tags.natural === 'heath' || elem.tags.natural === 'grassland'
-        //     || elem.tags.natural === 'fell' || elem.tags.natural === 'bare_rock'
-        //     || elem.tags.natural === 'scree' || elem.tags.natural === 'shingle'
-        //     || elem.tags.natural === 'sand' || elem.tags.natural === 'mud'
-        //     || elem.tags.natural === 'wetland' || elem.tags.natural === 'glacier'
-        //     || elem.tags.natural === 'beach')
-        //   return [ { layer: LAND, style: { fill: '#abd4e0' } } ];
-
+        if (elem.tags.natural === 'wood' || elem.tags.natural === 'scrub'
+            || elem.tags.natural === 'heath' || elem.tags.natural === 'grassland'
+            || elem.tags.natural === 'fell' || elem.tags.natural === 'bare_rock'
+            || elem.tags.natural === 'scree' || elem.tags.natural === 'shingle'
+            || elem.tags.natural === 'sand' || elem.tags.natural === 'mud'
+            || elem.tags.natural === 'wetland' || elem.tags.natural === 'glacier'
+            || elem.tags.natural === 'beach') {
+          let color = 'none'; let add = 0;
+          if (elem.tags.natural === 'wood') { color = '#9dca8a'; add = -1; }
+          if (elem.tags.natural === 'scrub') color = '#c9d8ad';
+          if (elem.tags.natural === 'heath') color = '#d6d99f';
+          if (elem.tags.natural === 'grassland') color = '#ceecb2';
+          if (elem.tags.natural === 'fell') color = '#ceecb2';
+          if (elem.tags.natural === 'bare_rock') color = '#ede4dc';
+          if (elem.tags.natural === 'scree') color = '#ede4dc';
+          if (elem.tags.natural === 'shingle') color = '#ede4dc';
+          if (elem.tags.natural === 'sand') color = '#f0e5c2';
+          if (elem.tags.natural === 'mud') color = '#e7ddd3';
+          if (elem.tags.natural === 'wetland') color = '#e7ddd3';
+          if (elem.tags.natural === 'glacier') color = '#deeded';
+          if (elem.tags.natural === 'beach') color = '#fff1bb';
+          if (color !== 'none')
+            return [ { layer: LAND + add, style: { fill: color } } ];
+        }
       } else if (elem.tags && elem.tags.landuse) {
-        let color = 'none';
+        let color = 'none'; let add = 0;
         if (elem.tags.landuse === 'commercial') color = '#eecfcf';
         if (elem.tags.landuse === 'construction') color = '#c7c7b4';
         if (elem.tags.landuse === 'industrial') color = '#e6d1e3';
@@ -390,7 +407,7 @@ class SVGRenderer {
         if (elem.tags.landuse === 'cemetery') color = '#abccb0';
         if (elem.tags.landuse === 'farmland') color = '#eff0d6';
         if (elem.tags.landuse === 'farmyard') color = '#eacca4';
-        if (elem.tags.landuse === 'forest') color = '#9dca8a';
+        if (elem.tags.landuse === 'forest') { color = '#9dca8a'; add = -1; }
         if (elem.tags.landuse === 'garages') color = '#deddcc';
         if (elem.tags.landuse === 'grass') color = '#cfeda5';
         if (elem.tags.landuse === 'greenfield') color = '#f1eee8';
@@ -409,7 +426,7 @@ class SVGRenderer {
         if (elem.tags.landuse === 'village_green') color = '#ceecb1';
         if (elem.tags.landuse === 'vineyard') color = '#9edc90';
         if (color !== 'none')
-          return [ { layer: LAND, style: { fill: color } } ];
+          return [ { layer: LAND + add, style: { fill: color } } ];
       }
       return [];
     };

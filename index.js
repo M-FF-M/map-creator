@@ -33,7 +33,8 @@ async function main() {
   } else {
     // res = await ren.downloadAndRenderMap({ ll: { lat: 47.693356, lon: 11.749774 }, ur: { lat: 47.717956, lon: 11.765478 } }, scale);
     // res = await ren.downloadAndRenderMap({ ll: { lat: 47.576453, lon: 11.747029 }, ur: { lat: 47.772483, lon: 11.977459 } }, scale);
-    res = await ren.downloadAndRenderMap({ ll: { lat: 47.5861, lon: 11.8218 }, ur: { lat: 47.6048, lon: 11.8596 } }, scale);
+    // res = await ren.downloadAndRenderMap({ ll: { lat: 47.5861, lon: 11.8218 }, ur: { lat: 47.6048, lon: 11.8596 } }, scale);
+    res = await ren.downloadAndRenderMap({ ll: { lat: 49.5721, lon: 8.6292 }, ur: { lat: 49.6515, lon: 8.8405 } }, scale);
   }
   Files.cacheFile('app-data/test', 'svg', res);
   // console.log(res); // 47.693356, 11.749774, 47.700786, 11.762389
