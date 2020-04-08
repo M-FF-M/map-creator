@@ -147,11 +147,11 @@ class SVGRenderer {
     let BUILDINGS = 0;
     const ROAD_LAYERS = 7;
     const LAND = cLayer++;
-    cLayer++; const WATER = cLayer++;
+    cLayer++; const WATER = cLayer++; // water requires two layers
     if (this.scale > 5000) BUILDINGS = cLayer++;
     const ROAD_BG = cLayer; cLayer += ROAD_LAYERS;
     const ROAD_FG = cLayer; cLayer += ROAD_LAYERS;
-    cLayer += 2; const RAIL_BG = cLayer++;
+    cLayer += 2; const RAIL_BG = cLayer++; // cLayer += 2 for disused railway or railway under construction
     const RAIL_FG = cLayer++;
     if (this.scale <= 5000) BUILDINGS = cLayer++;
     const LAYER_NUM = cLayer;
@@ -159,6 +159,9 @@ class SVGRenderer {
       ret.layers.push([]);
     
     const ndMap = {}; const wayMap = {}; const relMap = {}; const relWays = {};
+      // ndMap: node id -> index in osmData.elements, wayMap, relMap,
+      // relWays: OSM id -> true (this is a way which will be drawn as part of a relation) / false
+    const pathEnds = []; // saves end an start node ids for paths in ret.paths (as an object {start: id, end: id})
     for (let i = 0; i < osmData.elements.length; i++) {
       if (osmData.elements[i].type === 'node')
         ndMap[osmData.elements[i].id] = i;
@@ -435,12 +438,14 @@ class SVGRenderer {
     for (let i = 0; i < osmData.elements.length; i++) {
       if (createPath(osmData.elements[i])) {
         const pIdx = ret.paths.length;
-        ret.paths.push([]);
+        ret.paths.push([]); pathEnds.push({});
         for (let k = 0; k < osmData.elements[i].nodes.length; k++) {
           const nodeIdx = ndMap[ osmData.elements[i].nodes[k] ];
           if (nodeIdx) {
             const coords = toMapCoords(osmData.elements[nodeIdx].lat, osmData.elements[nodeIdx].lon);
             ret.paths[pIdx].push({ x: coords[0], y: coords[1] });
+            if (ret.paths[pIdx].length == 1) pathEnds[pIdx].start = nodeIdx;
+            pathEnds[pIdx].end = nodeIdx;
           }
         }
         pBef += ret.paths[pIdx].length;
@@ -454,15 +459,76 @@ class SVGRenderer {
     }
     for (let i = 0; i < osmData.elements.length; i++) {
       if (displayRelation(osmData.elements[i])) {
-        const ways = [];
+        const ways = []; const nodeIdxMap = {}; const idxMap = {};
         for (let k = 0; k < osmData.elements[i].members.length; k++) {
           if (osmData.elements[i].members[k].type === 'way') {
-            if (typeof relWays[osmData.elements[i].members[k].ref] === 'number')
-              ways.push(relWays[osmData.elements[i].members[k].ref]);
+            if (typeof relWays[osmData.elements[i].members[k].ref] === 'number') {
+              const pathIdx = relWays[osmData.elements[i].members[k].ref];
+              if (!(nodeIdxMap[ pathEnds[pathIdx].start ] instanceof Array))
+                nodeIdxMap[ pathEnds[pathIdx].start ] = [];
+              if (!(nodeIdxMap[ pathEnds[pathIdx].end ] instanceof Array))
+                nodeIdxMap[ pathEnds[pathIdx].end ] = [];
+              nodeIdxMap[ pathEnds[pathIdx].start ].push({ idx: ways.length, start: true });
+              nodeIdxMap[ pathEnds[pathIdx].end ].push({ idx: ways.length, start: false });
+              idxMap[ways.length] = true;
+              ways.push( { pathIdx, reverse: false,
+                startIdx: pathEnds[pathIdx].start, endIdx: pathEnds[pathIdx].end } ); // reverse: whether to traverse path in reverse order
+            }
           }
         }
-        if (ways.length > 0)
-          addDrawingStyles(osmData.elements[i], ways);
+        const waysNew = [];
+        // sorting (and potentially reversing) all the ways in order to draw them in the right order
+        for (let j = 0; j < ways.length; j++) {
+          if (idxMap[j]) {
+            let cidx = j; let cidxRev = cidx;
+            let creversed = false, creversedRev = false;
+            idxMap[cidx] = false;
+            waysNew.push(ways[cidx]); const constidx = waysNew.length - 1;
+            for (let phase = 0; phase < 2; phase++) {
+              // phases: 0: look for previous paths, 1: look for following paths
+              while (nodeIdxMap[ phase == 0
+                  ? (creversedRev ? pathEnds[ ways[cidxRev].pathIdx ].end : pathEnds[ ways[cidxRev].pathIdx ].start)
+                  : (creversed ? pathEnds[ ways[cidx].pathIdx ].start : pathEnds[ ways[cidx].pathIdx ].end) ]
+                  instanceof Array) {
+                const ndMpIdx = phase == 0
+                  ? (creversedRev ? pathEnds[ ways[cidxRev].pathIdx ].end : pathEnds[ ways[cidxRev].pathIdx ].start)
+                  : (creversed ? pathEnds[ ways[cidx].pathIdx ].start : pathEnds[ ways[cidx].pathIdx ].end);
+                let residx = -1;
+                for (let aidx = 0; aidx < nodeIdxMap[ndMpIdx].length; aidx++) {
+                  if (nodeIdxMap[ndMpIdx][aidx].idx != cidxRev && idxMap[ nodeIdxMap[ndMpIdx][aidx].idx ]) {
+                    residx = aidx;
+                    break;
+                  }
+                }
+                if (residx != -1) {
+                  const nidx = nodeIdxMap[ndMpIdx][residx].idx;
+                  let nreversed = phase == 0
+                    ? (nodeIdxMap[ndMpIdx][residx].start ? true : false)
+                    : (nodeIdxMap[ndMpIdx][residx].start ? false : true);
+                  idxMap[nidx] = false;
+                  ways[nidx].reverse = nreversed;
+                  if (nreversed) {
+                    ways[nidx].startIdx = pathEnds[ ways[nidx].pathIdx ].end;
+                    ways[nidx].endIdx = pathEnds[ ways[nidx].pathIdx ].start;
+                  }
+                  if (phase == 0) {
+                    waysNew.splice(constidx, 0, ways[nidx]);
+                    cidxRev = nidx;
+                    creversedRev = nreversed;
+                  } else {
+                    waysNew.push(ways[nidx]);
+                    cidx = nidx;
+                    creversed = nreversed;
+                  }
+                } else {
+                  break;
+                }
+              }
+            }
+          }
+        }
+        if (waysNew.length > 0)
+          addDrawingStyles(osmData.elements[i], waysNew);
       }
     }
     console.log(`Path simplification: number of original nodes was ${pBef}, reduced to ${pAft} nodes.`);
@@ -487,28 +553,20 @@ class SVGRenderer {
     let output = '';
     if (dataElem.type === 'path' || dataElem.type === 'multipath') {
       output += '<path d="';
-      const ways = dataElem.type === 'path' ? [dataElem.id] : dataElem.ids;
-      // const isArea = dataElem.style.fill && dataElem.style.fill !== 'transparent'
-      //   && dataElem.style.fill !== 'none' && dataElem.style.fillOpacity !== '0';
-      //   && dataElem.style.fillOpacity !== 0;
+      const ways = dataElem.type === 'path' ? [ { pathIdx: dataElem.id, reverse: false } ] : dataElem.ids;
       for (let k = 0; k < ways.length; k++) {
-        const path = data.paths[ ways[k] ];
+        const path = ways[k].reverse
+          ? [...data.paths[ ways[k].pathIdx ]].reverse()
+          : data.paths[ ways[k].pathIdx ];
         let contPath = false;
         if (k > 0) {
-          const lastP = data.paths[ ways[k - 1] ][ data.paths[ ways[k - 1] ].length - 1 ];
-          const curP = path[0];
-          if (Math.abs(lastP.x - curP.x) < 1e-4 && Math.abs(lastP.y - curP.y) < 1e-4)
-            contPath = true;
+          if (ways[k - 1].endIdx == ways[k].startIdx) contPath = true;
         }
         for (let i = 0; i < path.length; i++) {
           if (i == 0 && !contPath) output += 'M';
           else output += 'L';
           output += `${s(path[i].x)} ${s(path[i].y)}`;
         }
-        // if (isArea && path.length > 0 && (Math.abs(path[0].x - path[path.length - 1].x) > 1e-4
-        //     || Math.abs(path[0].y - path[path.length - 1].y) > 1e-4)) {
-        //   output += `${s(path[0].x)} ${s(path[0].y)}`;
-        // }
       }
       output += `"${this.toAttribs(dataElem.style)}${ways.length > 1 ? ' fill-rule="evenodd"' : ''} />`;
     }
