@@ -209,13 +209,15 @@ class OSMParser {
     };
 
     const data = cachedData !== null ? cachedData : OSMParser.getProcessedData(osmData, toMapCoords, mapWidth, mapHeight);
-    data.mapWidth = mapWidth;
-    data.mapHeight = mapHeight;
-    data.scale = scale;
-    data.left = left;
-    data.right = right;
-    data.top = top;
-    data.bottom = bottom;
+    if (typeof data.scale === 'undefined') {
+      data.mapWidth = mapWidth;
+      data.mapHeight = mapHeight;
+      data.scale = scale;
+      data.left = left;
+      data.right = right;
+      data.top = top;
+      data.bottom = bottom;
+    }
 
     if (cacheData) {
       if (recacheLvl >= 2 && cacheNum == 1) {
