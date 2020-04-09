@@ -2,10 +2,6 @@
 const https = require('https');
 const Files = require('./files')
 
-function s(num) {
-  return `${(Math.round(num * 100) / 100)}`;
-}
-
 class OverpassRequest {
   constructor() {
     this.apiURL = 'https://overpass.kumi.systems/api/interpreter';
