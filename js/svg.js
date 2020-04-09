@@ -70,10 +70,16 @@ class SVGRenderer {
    * the older entries
    * @property {number} cacheSettings.cacheNum set this number to specify which cache file to load
    * @property {boolean} cacheSettings.cacheData set to true if data should be cached
+   * @property {number} cacheSettings.specialSaveCache if set to a number >10, the data will be
+   * cached with the according number in addition to the standard cache behavior; the cached extra
+   * data will then only be overwritten if the same number is given again, it will not be
+   * overwritten by newer data
    */
   renderMap(osmData, boundingBox, scale, cacheSettings = {}) {
+    console.log('Entering renderMap().');
     this.scale = scale;
-    let { cachedData = null, recacheLvl = 0, cacheData = true, cacheNum = 1 } = cacheSettings;
+    let { cachedData = null, recacheLvl = 0, cacheData = true, cacheNum = 1, specialSaveCache = -1 }
+      = cacheSettings;
     if (boundingBox === null)
       boundingBox = JSON.parse(Files.readCacheFile('app-data/cache/bb', 'json', cacheNum));
     if (osmData === null && recacheLvl>= 1)
@@ -83,13 +89,16 @@ class SVGRenderer {
     if (cacheData) {
       if (recacheLvl >= 1 && cacheNum == 1) {
         Files.recacheFile('app-data/cache/osm', 'json');
+        if (specialSaveCache > 10) Files.saveFile(`app-data/cache/osm-${specialSaveCache}.json`, JSON.stringify(osmData));
         console.log('OSM data cache entry created (no changes).');
       } else {
         const jsonData = JSON.stringify(osmData);
         Files.cacheFile('app-data/cache/osm', 'json', jsonData);
+        if (specialSaveCache > 10) Files.saveFile(`app-data/cache/osm-${specialSaveCache}.json`, jsonData);
         console.log(`OSM data cached (${Files.getSizeStr(jsonData.length)}).`);
       }
       Files.cacheFile('app-data/cache/bb', 'json', JSON.stringify(boundingBox));
+      if (specialSaveCache > 10) Files.saveFile(`app-data/cache/bb-${specialSaveCache}.json`, JSON.stringify(boundingBox));
       console.log(`Bounding box (${s(boundingBox.ll.lat, 6)}, ${s(boundingBox.ll.lon, 6)}, ${
         s(boundingBox.ur.lat, 6)}, ${s(boundingBox.ur.lon, 6)}) cached.`);
     }
@@ -122,10 +131,12 @@ class SVGRenderer {
     if (cacheData) {
       if (recacheLvl >= 2 && cacheNum == 1) {
         Files.recacheFile('app-data/cache/draw', 'json');
+        if (specialSaveCache > 10) Files.saveFile(`app-data/cache/draw-${specialSaveCache}.json`, JSON.stringify(data));
         console.log('Drawing data cache entry created (no changes).');
       } else {
         const cacheStr = JSON.stringify(data);
         Files.cacheFile('app-data/cache/draw', 'json', cacheStr);
+        if (specialSaveCache > 10) Files.saveFile(`app-data/cache/draw-${specialSaveCache}.json`, cacheStr);
         console.log(`Drawing data cached (${Files.getSizeStr(cacheStr.length)}).`);
       }
     }
@@ -142,7 +153,9 @@ class SVGRenderer {
   }
 
   getDrawingData(osmData, toMapCoords) {
-    const ret = { layers: [], paths: [] };
+    const ret = { layers: [], paths: [], timestamp: (new Date()).getTime() };
+    if (osmData.osm3s && osmData.osm3s.timestamp_osm_base)
+      ret.osmTime = osmData.osm3s.timestamp_osm_base;
     let cLayer = 0;
     let BUILDINGS = 0;
     const ROAD_LAYERS = 7;
@@ -209,7 +222,7 @@ class SVGRenderer {
           return true;
       }
       return false;
-    }
+    };
     const displayRelation = elem => {
       if (elem.type === 'relation' && elem.tags && elem.tags.type === 'multipolygon') {
         if (areaFeature(elem)) return true;

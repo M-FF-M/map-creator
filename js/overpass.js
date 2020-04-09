@@ -12,6 +12,7 @@ class OverpassRequest {
   }
 
   simpleApiRequest(request) {
+    console.log('Entering OverpassRequest.simpleApiRequest().');
     return new Promise((resolve, reject) => {
       https.get(`${this.apiURL}?data=${encodeURIComponent(request)}`, resp => {
         console.log('Downloading OSM data...');
