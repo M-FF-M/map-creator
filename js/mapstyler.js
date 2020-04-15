@@ -35,6 +35,8 @@
  * @property {boolean} isArea whether this is an area feature
  * @property {boolean} isWay whether this feature presents a way / road / track / railway usable by humans
  * @property {boolean} isPath whether this is a path feature
+ * @property {boolean} isTunnel whether this is a path represents a tunnel
+ * @property {boolean} isBridge whether this is a path represents a bridge
  * @property {boolean} isMultiPath whether the path consists of multiple paths and must be filled with the even-odd rule
  * @property {FeatureCategory} info feature category information
  * @property {PathPoint[]} path the path representing the feature
@@ -75,9 +77,17 @@ class MapStyler {
     cLayer++; // land requires two layers
     /** @type {number} the land layer (layer below can also be used for land) */
     this.LAND = cLayer++;
+
+    const wayStartLayer = cLayer;
+
     cLayer++; // water requires two layers
     /** @type {number} the water layer (layer below can also be used for water) */
     this.WATER = cLayer++;
+    
+    /** @type {number} the railway background layer for less important railways (under construction, disused etc.) */
+    this.RAIL_BG2 = cLayer++;
+    /** @type {number} the railway foreground layer for less important railways (under construction, disused etc.) */
+    this.RAIL_FG2 = cLayer++;
 
     if (scale > 5000) this.BUILDINGS = cLayer++;
 
@@ -88,15 +98,28 @@ class MapStyler {
     this.ROAD_FG = cLayer;
     cLayer += this.ROAD_LAYERS;
 
-    cLayer += 2; // cLayer += 2 for disused railway or railway under construction
-    /** @type {number} the railway background layer (the layer 2 layers below can also be used for railway background) */
+    /** @type {number} the railway background layer */
     this.RAIL_BG = cLayer++;
-    /** @type {number} the railway foreground layer (the layer 2 layers below can also be used for railway foreground) */
+    /** @type {number} the railway foreground layer */
     this.RAIL_FG = cLayer++;
 
     if (scale <= 5000) this.BUILDINGS = cLayer++;
+
+    /** @type {number} how many layers to subtract (tunnels) or add (bridges) for tunnels and bridges */
+    this.TUNNEL_BRIDGE_OFFSET = cLayer - wayStartLayer;
+
+    // adapt layer numbers (they currently represent the tunnel layer)
+    this.WATER += this.TUNNEL_BRIDGE_OFFSET;
+    this.RAIL_BG2 += this.TUNNEL_BRIDGE_OFFSET;
+    this.RAIL_FG2 += this.TUNNEL_BRIDGE_OFFSET;
+    this.BUILDINGS += this.TUNNEL_BRIDGE_OFFSET;
+    this.ROAD_BG += this.TUNNEL_BRIDGE_OFFSET;
+    this.ROAD_FG += this.TUNNEL_BRIDGE_OFFSET;
+    this.RAIL_BG += this.TUNNEL_BRIDGE_OFFSET;
+    this.RAIL_FG += this.TUNNEL_BRIDGE_OFFSET;
+
     /** @type {number} the total number of layers */
-    this.LAYER_NUM = cLayer;
+    this.LAYER_NUM = cLayer + 2 * this.TUNNEL_BRIDGE_OFFSET;
   }
 
   /**
@@ -117,6 +140,8 @@ class MapStyler {
     if (!elem.draw)
       throw new Error('MapStyler.getPathStyle(): only drawable features should be passed to this method!');
 
+    const layerAdd = elem.isTunnel ? -this.TUNNEL_BRIDGE_OFFSET : (elem.isBridge ? this.TUNNEL_BRIDGE_OFFSET : 0);
+
     if (elem.info.type === 'road') {
       if (elem.info.subtype === 'track' || elem.info.subtype === 'footway'
           || elem.info.subtype === 'bridleway' || elem.info.subtype === 'steps'
@@ -135,7 +160,7 @@ class MapStyler {
         if (elem.info.subtype === 'cycleway')
           { color = '#1111ff'; dashed = '0.08 0.04'; }
         return [
-          { layer: this.ROAD_FG, style:
+          { layer: this.ROAD_FG + layerAdd, style:
             { stroke: color, fillOpacity: '0', strokeWidth: s(pWidth),
               strokeDasharray: dashed } }
         ];
@@ -173,38 +198,51 @@ class MapStyler {
         { innerColor = '#fefefe'; outerColor = '#c9c5c5'; bgWidth = 0.08; fgWidth = 0.04; }
       if (elem.info.subtype === 'pedestrian')
         { innerColor = '#dddde9'; outerColor = '#a7a5a6'; }
-      return [
-        { layer: this.ROAD_BG + rdLayer, style:
-          { stroke: outerColor, fillOpacity: '0', strokeWidth: s(bgWidth), strokeLinecap: 'round', strokeLinejoin: 'round' } },
-        { layer: this.ROAD_FG + rdLayer, style:
+      const retArr = [
+        { layer: this.ROAD_BG + rdLayer + layerAdd, style:
+          { stroke: outerColor, fillOpacity: '0', strokeWidth: s(bgWidth), strokeLinecap: elem.isBridge ? 'butt' : 'round', strokeLinejoin: 'round' } },
+        { layer: this.ROAD_FG + rdLayer + layerAdd, style:
           { stroke: innerColor, fillOpacity: '0', strokeWidth: s(fgWidth), strokeLinecap: 'round', strokeLinejoin: 'round' } }
       ];
+      if (elem.isTunnel) {
+        retArr[0].style.strokeOpacity = '0.3';
+        retArr[1].style.strokeOpacity = '0.3';
+      } else if (elem.isBridge) {
+        // retArr[0].layer -= layerAdd;
+        retArr[0].style.stroke = 'black';
+      }
+      return retArr;
     }
 
     if (elem.info.type === 'railway') {
       let outerColor = '#707070';
       let innerColor = '#ededed';
-      let layerBg = this.RAIL_BG;
+      let layerBg = this.RAIL_FG; // this.RAIL_BG;
       let layerFg = this.RAIL_FG;
       if (elem.info.subtype === 'construction' || elem.info.subtype === 'disused'
           || (elem.info.service && (elem.info.service === 'crossover'
             || elem.info.service === 'siding'|| elem.info.service === 'spur'|| elem.info.service === 'yard'))) {
         outerColor = '#acabab';
         innerColor = '#f2f1f1';
-        layerBg -= 2;
-        layerFg -= 2;
+        layerBg = this.RAIL_FG2; // this.RAIL_BG2;
+        layerFg = this.RAIL_FG2;
       }
-      return [
-        { layer: layerBg, style:
+      const retArr = [
+        { layer: layerBg + layerAdd, style:
           { stroke: outerColor, fillOpacity: '0', strokeWidth: '0.09' } },
-        { layer: layerFg, style:
+        { layer: layerFg + layerAdd, style:
           { stroke: innerColor, fillOpacity: '0', strokeWidth: '0.05', strokeDasharray: '0.25' } }
       ];
+      if (elem.isTunnel) {
+        retArr[0].style.strokeOpacity = '0.5';
+        retArr[1].style.strokeOpacity = '0.5';
+      }
+      return retArr;
     }
 
     if (elem.info.type === 'building') {
       return [
-        { layer: this.BUILDINGS, style:
+        { layer: this.BUILDINGS + layerAdd, style:
           { fill: '#d9d0c9', stroke: '#c5b8ac', strokeWidth: '0.02', strokeLinecap: 'round', strokeLinejoin: 'round' } }
       ];
     }
@@ -213,7 +251,7 @@ class MapStyler {
       if (elem.isPath) {
         if (elem.info.subtype === 'riverbank') {
           return [
-            { layer: this.WATER, style: { fill: '#abd4e0' } }
+            { layer: this.WATER + layerAdd, style: { fill: '#abd4e0' } }
           ];
         } else if (elem.info.subtype === 'river'
             || elem.info.subtype === 'riverbank' || elem.info.subtype === 'stream'
@@ -221,9 +259,9 @@ class MapStyler {
             || elem.info.subtype === 'ditch') {
           if (elem.info.subtype === 'canal') {
             return [
-              { layer: this.WATER - 1, style:
+              { layer: this.WATER - 1 + layerAdd, style:
                 { stroke: '#7d9ba4', fillOpacity: '0', strokeWidth: '0.12', strokeLinecap: 'round', strokeLinejoin: 'round' } },
-              { layer: this.WATER, style:
+              { layer: this.WATER + layerAdd, style:
                 { stroke: '#abd4e0', fillOpacity: '0', strokeWidth: '0.08', strokeLinecap: 'round', strokeLinejoin: 'round' } }
             ];
           } else {
@@ -231,7 +269,7 @@ class MapStyler {
             if (elem.info.subtype === 'drain' || elem.info.subtype === 'ditch') pWidth = 0.03;
             if (elem.info.subtype === 'river') pWidth = 0.08;
             return [
-              { layer: this.WATER, style:
+              { layer: this.WATER + layerAdd, style:
                 { stroke: '#abd4e0', fillOpacity: '0', strokeWidth: s(pWidth), strokeLinecap: 'round', strokeLinejoin: 'round' } }
             ];
           }
@@ -241,11 +279,11 @@ class MapStyler {
       if (elem.isArea) {
         if (elem.info.subtype === 'water' || elem.info.subtype === 'spring'
             || elem.info.subtype === 'hot_spring' || elem.info.subtype === 'blowhole')
-          return [ { layer: this.WATER, style: { fill: '#abd4e0' } } ];
+          return [ { layer: this.WATER + layerAdd, style: { fill: '#abd4e0' } } ];
         if (elem.info.subtype === 'basin')
-          return [ { layer: this.WATER, style: { fill: '#b4d0d1' } } ];
+          return [ { layer: this.WATER + layerAdd, style: { fill: '#b4d0d1' } } ];
         if (elem.info.subtype === 'salt_pond')
-          return [ { layer: this.WATER, style: { fill: '#e7e6e2' } } ];
+          return [ { layer: this.WATER + layerAdd, style: { fill: '#e7e6e2' } } ];
       }
     }
 
@@ -292,7 +330,7 @@ class MapStyler {
       if (elem.info.subtype === 'village_green') color = '#ceecb1';
       if (elem.info.subtype === 'vineyard') color = '#9edc90';
       if (color !== 'none')
-        return [ { layer: this.LAND + add, style: { fill: color } } ];
+        return [ { layer: this.LAND + add + layerAdd, style: { fill: color } } ];
       else
         return [];
     }

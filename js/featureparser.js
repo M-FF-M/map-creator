@@ -11,6 +11,8 @@
  * @property {boolean} isArea whether this is an area feature
  * @property {boolean} isWay whether this feature presents a way / road / track / railway usable by humans
  * @property {boolean} isPath whether this is a path feature
+ * @property {boolean} isTunnel whether this is a path represents a tunnel
+ * @property {boolean} isBridge whether this is a path represents a bridge
  * @property {FeatureCategory} info feature category information
  */
 
@@ -25,9 +27,12 @@ class FeatureParser {
    */
   static parseFeature(elem) {
     const ret = {
-      draw: false, isArea: false, isWay: false, isPath: false,
+      draw: false, isArea: false, isWay: false, isPath: false, isTunnel: false, isBridge: false,
       info: { type: '', subtype: '', },
     };
+
+    if (elem.tags && elem.tags.tunnel) ret.isTunnel = true;
+    if (elem.tags && elem.tags.bridge) ret.isBridge = true;
 
     if (elem.tags && elem.tags.natural) {
       if (elem.tags.natural === 'wood' || elem.tags.natural === 'scrub'

@@ -33,6 +33,8 @@ const MapStyler = require('./mapstyler');
  * @property {boolean} isArea whether this is an area feature
  * @property {boolean} isWay whether this feature presents a way / road / track / railway usable by humans
  * @property {boolean} isPath whether this is a path feature
+ * @property {boolean} isTunnel whether this is a path represents a tunnel
+ * @property {boolean} isBridge whether this is a path represents a bridge
  * @property {boolean} isMultiPath whether the path consists of multiple paths and must be filled with the even-odd rule
  * @property {FeatureCategory} info feature category information
  * @property {PathPoint[]} path the path representing the feature

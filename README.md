@@ -39,7 +39,7 @@ be saved in the folder `app-data`. The following command line options are availa
 ## To do
 
 - Create external styling files
-- Fix railway rendering: if there are many tracks close together, the dashes overlap
+- Consider improving bridge rendering - currently, they are drawn on a higher level; this causes problems at the bridge ends
 - Render icons for special places (mountain tops, water sources, huts, etc.)
 - Add place names to the map (cities, mountains, streets, rivers, etc.)
 - Add contour lines (will be more work since they have to be downloaded from a separate source)
