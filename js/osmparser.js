@@ -8,7 +8,7 @@ const simplify = require('simplify-js');
 
 /**
  * @typedef {object} FeatureCategory feature category object
- * @property {string} type one of 'water', 'land', 'road', 'railway', 'building'
+ * @property {string} type one of 'water', 'land', 'road', 'railway', 'building', 'poi'
  * @property {string} subtype many possible values inherited from OSM elements
  */
 
@@ -16,7 +16,7 @@ const simplify = require('simplify-js');
  * @typedef {object} PathPoint point on a processed path
  * @property {number} x x-coordinate on the map
  * @property {number} y y-coordinate on the map
- * @property {string} connection connector; M for move and L for line
+ * @property {string} [connection] connector; M for move and L for line
  */
 
 /**
@@ -25,6 +25,7 @@ const simplify = require('simplify-js');
  * @property {boolean} isArea whether this is an area feature
  * @property {boolean} isWay whether this feature presents a way / road / track / railway usable by humans
  * @property {boolean} isPath whether this is a path feature
+ * @property {boolean} isPoint whether this is a point feature (point of interest)
  * @property {boolean} isTunnel whether this is a path represents a tunnel
  * @property {boolean} isBridge whether this is a path represents a bridge
  * @property {boolean} isMultiPath whether the path consists of multiple paths and must be filled with the even-odd rule
@@ -122,6 +123,8 @@ class OSMParser {
     let osmData = await req.simpleJSONApiRequest(
       `(
         (
+          node
+            (${boundingBox.ll.lat},${boundingBox.ll.lon},${boundingBox.ur.lat},${boundingBox.ur.lon});
           way
             (${boundingBox.ll.lat},${boundingBox.ll.lon},${boundingBox.ur.lat},${boundingBox.ur.lon});
           >;
@@ -450,6 +453,12 @@ class OSMParser {
           }
           ret.features.push(feature);
         }
+
+      } else if (FeatureParser.shouldDisplayNode(osmData.elements[i])) { // if node should be shown on map
+        const feature = FeatureParser.parseFeature(osmData.elements[i]);
+        const coords = toMapCoords(osmData.elements[i].lat, osmData.elements[i].lon);
+        feature.path = [ { x: d(coords[0]), y: d(coords[1]) } ]; // add coordinates to feature
+        ret.features.push(feature); // add point feature to map
       }
     }
 

@@ -1,7 +1,7 @@
 
 /**
  * @typedef {object} FeatureCategory feature category object
- * @property {string} type one of 'water', 'land', 'road', 'railway', 'building'
+ * @property {string} type one of 'water', 'land', 'road', 'railway', 'building', 'poi'
  * @property {string} subtype many possible values inherited from OSM elements
  */
 
@@ -11,6 +11,7 @@
  * @property {boolean} isArea whether this is an area feature
  * @property {boolean} isWay whether this feature presents a way / road / track / railway usable by humans
  * @property {boolean} isPath whether this is a path feature
+ * @property {boolean} isPoint whether this is a point feature (point of interest)
  * @property {boolean} isTunnel whether this is a path represents a tunnel
  * @property {boolean} isBridge whether this is a path represents a bridge
  * @property {FeatureCategory} info feature category information
@@ -28,8 +29,22 @@ class FeatureParser {
   static parseFeature(elem) {
     const ret = {
       draw: false, isArea: false, isWay: false, isPath: false, isTunnel: false, isBridge: false,
-      info: { type: '', subtype: '', },
+      isPoint: false, info: { type: '', subtype: '', },
     };
+
+    if (elem.type === 'node') {
+      if (elem.tags && elem.tags.natural) {
+        if (elem.tags.natural === 'peak' || elem.tags.natural === 'hill') {
+          ret.draw = true;
+          ret.isPoint = true;
+          ret.info.type = 'poi';
+          ret.info.subtype = elem.tags.natural;
+          return ret;
+        }
+      }
+
+      return ret;
+    }
 
     if (elem.tags && elem.tags.tunnel) ret.isTunnel = true;
     if (elem.tags && elem.tags.bridge) ret.isBridge = true;
@@ -80,12 +95,18 @@ class FeatureParser {
     }
 
     if (elem.tags && elem.tags.waterway) {
-      if (elem.tags.waterway === 'river' || elem.tags.waterway === 'riverbank'
-          || elem.tags.waterway === 'riverbank' || elem.tags.waterway === 'stream'
+      if (elem.tags.waterway === 'river' || elem.tags.waterway === 'stream'
           || elem.tags.waterway === 'canal' || elem.tags.waterway === 'drain'
           || elem.tags.waterway === 'ditch') {
         ret.draw = true;
         ret.isPath = true;
+        ret.info.type = 'water';
+        ret.info.subtype = elem.tags.waterway;
+        return ret;
+      }
+      if (elem.tags.waterway === 'riverbank') {
+        ret.draw = true;
+        ret.isArea = true;
         ret.info.type = 'water';
         ret.info.subtype = elem.tags.waterway;
         return ret;
@@ -108,16 +129,19 @@ class FeatureParser {
         ret.isPath = true; ret.isWay = true;
         ret.info.type = 'road';
         ret.info.subtype = elem.tags.highway;
+        if (elem.tags.surface)
+          ret.info.surface = elem.tags.surface.split(/:|;/g)[0];
         return ret;
       }
     }
 
     if (elem.tags && elem.tags.railway && elem.tags.railway !== 'abandoned'
-        && elem.tags.railway !== 'subway') {
+        && elem.tags.railway !== 'subway' && elem.tags.railway !== 'platform') {
       ret.draw = true;
       ret.isPath = true; ret.isWay = true;
       ret.info.type = 'railway';
       ret.info.subtype = elem.tags.railway;
+      if (elem.tags["railway:preserved"]) ret.info.subtype = 'preserved';
       if (elem.tags.service) ret.info.service = elem.tags.service;
       return ret;
     }
@@ -150,6 +174,18 @@ class FeatureParser {
   static shouldDisplayRelation(elem) {
     if (elem.type === 'relation' && elem.tags && elem.tags.type === 'multipolygon') {
       if (FeatureParser.isAreaFeature(elem)) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Checks whether an OSM element is a node and should be drawn on the map
+   * @param {object} elem an OSM element
+   * @return {boolean} true if the OSM element is a node and should be drawn on the map
+   */
+  static shouldDisplayNode(elem) {
+    if (elem.type === 'node') {
+      if (FeatureParser.parseFeature(elem).draw) return true;
     }
     return false;
   }

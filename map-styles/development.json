@@ -1,0 +1,313 @@
+{
+  "rules" : [
+    {
+      "type" : "background",
+      "color" : "#f2efe9"
+    },
+    {
+      "type" : "bridge",
+      "color" : "#000000",
+      "foregroundColor" : "#dddddd"
+    },
+    {
+      "type" : "tunnel",
+      "opacity" : 0.3
+    },
+    {
+      "type" : "road",
+      "rules" : [
+        {
+          "subtype" : [ "motorway", "motorway_link" ], "layer" : "ROAD-MOTORWAY",
+          "borderedLine" : { "innerColor" : "#e990a0", "outerColor": "#df2e6b", "innerWidth" : 0.1, "outerWidth" : 0.14 }
+        },
+        {
+          "subtype" : [ "trunk", "trunk_link" ], "layer" : "ROAD-TRUNK",
+          "borderedLine" : { "innerColor" : "#fbb29a", "outerColor": "#cd532e", "innerWidth" : 0.1, "outerWidth" : 0.14 }
+        },
+        {
+          "subtype" : [ "primary", "primary_link" ], "layer" : "ROAD-PRIMARY",
+          "borderedLine" : { "innerColor" : "#fdd7a1", "outerColor": "#ab7b03", "innerWidth" : 0.1, "outerWidth" : 0.14 }
+        },
+        {
+          "subtype" : [ "secondary", "secondary_link" ], "layer" : "ROAD-SECONDARY",
+          "borderedLine" : { "innerColor" : "#f6fabb", "outerColor": "#7c8900", "innerWidth" : 0.1, "outerWidth" : 0.14 }
+        },
+        {
+          "subtype" : [ "tertiary", "tertiary_link" ], "layer" : "ROAD-TERTIARY",
+          "borderedLine" : { "innerColor" : "#fefefe", "outerColor": "#adadad", "innerWidth" : 0.1, "outerWidth" : 0.14 }
+        },
+        {
+          "subtype" : "road", "layer" : "ROAD-DEFAULT",
+          "borderedLine" : { "innerColor" : "#dddddd", "outerColor": "#c2c2c1", "innerWidth" : 0.06, "outerWidth" : 0.1 }
+        },
+        {
+          "subtype" : [ "unclassified", "residential" ], "layer" : "ROAD-DEFAULT",
+          "borderedLine" : { "innerColor" : "#fefefe", "outerColor": "#c9c5c5", "innerWidth" : 0.06, "outerWidth" : 0.1 }
+        },
+        {
+          "subtype" : "living_street", "layer" : "ROAD-DEFAULT",
+          "borderedLine" : { "innerColor" : "#ededed", "outerColor": "#c5c5c5", "innerWidth" : 0.06, "outerWidth" : 0.1 }
+        },
+        {
+          "subtype" : "service", "layer" : "ROAD-DEFAULT",
+          "borderedLine" : { "innerColor" : "#fefefe", "outerColor": "#c9c5c5", "innerWidth" : 0.04, "outerWidth" : 0.08 }
+        },
+        {
+          "subtype" : "pedestrian", "layer" : "ROAD-DEFAULT",
+          "borderedLine" : { "innerColor" : "#dddde9", "outerColor": "#a7a5a6", "innerWidth" : 0.06, "outerWidth" : 0.1 }
+        },
+        {
+          "subtype" : "track",
+          "rules": [
+            {
+              "isDefault": true, "layer" : "ROAD-PATH",
+              "dashedLine" : { "color" : "#ac8327", "dash" : "0.16 0.03 0.08 0.03", "width" : 0.03 }
+            },
+            {
+              "surface" : [ "paved", "asphalt", "concrete", "sett", "paving_stones", "cobblestone", "metal", "plastic" ], "layer" : "ROAD-PATH",
+              "line" : { "color" : "#ac8327", "width" : 0.04 }
+            },
+            {
+              "surface" : [ "fine_gravel", "gravel", "pebblestone", "stone", "compacted" ], "layer" : "ROAD-PATH",
+              "dashedLine" : { "color" : "#ac8327", "dash" : "0.22 0.04", "width" : 0.04 }
+            },
+            {
+              "surface" : [ "unpaved", "wood", "dirt", "earth", "mud", "ground" ], "layer" : "ROAD-PATH",
+              "dashedLine" : { "color" : "#ac8327", "dash" : "0.08 0.03", "width" : 0.03 }
+            },
+            {
+              "surface" : [ "grass_paver", "grass", "sand" ], "layer" : "ROAD-PATH",
+              "dashedLine" : { "color" : "#ac8327", "dash" : "0.03", "width" : 0.03 }
+            }
+          ]
+        },
+        {
+          "subtype" : [ "footway", "path" ],
+          "rules": [
+            {
+              "isDefault": true, "layer" : "ROAD-PATH",
+              "dashedLine" : { "color" : "#fc7f6f", "dash" : "0.08 0.04", "width" : 0.03 }
+            },
+            {
+              "surface" : [ "paved", "asphalt", "concrete", "sett", "paving_stones", "cobblestone", "metal", "plastic" ], "layer" : "ROAD-PATH",
+              "line" : { "color" : "#fc7f6f", "width" : 0.03 }
+            },
+            {
+              "surface" : [ "fine_gravel", "gravel", "pebblestone", "stone", "compacted" ], "layer" : "ROAD-PATH",
+              "dashedLine" : { "color" : "#fc7f6f", "dash" : "0.08 0.03", "width" : 0.03 }
+            },
+            {
+              "surface" : [ "unpaved", "wood", "dirt", "earth", "mud", "ground", "grass_paver", "grass", "sand" ], "layer" : "ROAD-PATH",
+              "dashedLine" : { "color" : "#fc7f6f", "dash" : "0.03", "width" : 0.03 }
+            }
+          ]
+        },
+        {
+          "subtype" : "bridleway", "layer" : "ROAD-PATH",
+          "dashedLine" : { "color" : "#028102", "dash" : "0.16 0.04", "width" : 0.03 }
+        },
+        {
+          "subtype" : "steps", "layer" : "ROAD-PATH",
+          "dashedLine" : { "color" : "#fc7f6f", "dash" : "0.04 0.02", "width" : 0.08 }
+        },
+        {
+          "subtype" : "cycleway", "layer" : "ROAD-PATH",
+          "dashedLine" : { "color" : "#1111ff", "dash" : "0.08 0.04", "width" : 0.03 }
+        }
+      ]
+    },
+    {
+      "type" : "railway",
+      "rules" : [
+        {
+          "isDefault": true, "layer" : "RAILWAY",
+          "dashedBorderedLine" : { "innerColor" : "#ededed", "outerColor" : "#707070", "dash" : "0.25", "innerWidth" : 0.05, "outerWidth" : 0.09 }
+        },
+        {
+          "subtype" : "preserved", "layer" : "RAILWAY",
+          "dashedBorderedLine" : { "innerColor" : "#cccccc", "outerColor" : "#999999", "dash" : "0.25 0.04", "innerWidth" : 0.04, "outerWidth" : 0.08 }
+        },
+        {
+          "subtype" : [ "construction", "disused" ], "layer" : "RAILWAY-MINOR",
+          "service" : [ "crossover", "siding", "spur", "yard" ],
+          "dashedBorderedLine" : { "innerColor" : "#f2f1f1", "outerColor" : "#acabab", "dash" : "0.25", "innerWidth" : 0.05, "outerWidth" : 0.09 }
+        }
+      ]
+    },
+    {
+      "type" : "building", "layer" : "BUILDING",
+      "borderedArea" : { "areaColor" : "#d9d0c9", "borderColor": "#c5b8ac", "borderWidth" : 0.02 }
+    },
+    {
+      "type" : "water",
+      "rules" : [
+        {
+          "subtype" : [ "water", "spring", "hot_spring", "blowhole", "riverbank" ], "layer" : "WATER",
+          "area" : { "color" : "#abd4e0" }
+        },
+        {
+          "subtype" : "basin", "layer" : "WATER",
+          "area" : { "color" : "#b4d0d1" }
+        },
+        {
+          "subtype" : "salt_pond", "layer" : "WATER",
+          "area" : { "color" : "#e7e6e2" }
+        },
+        {
+          "subtype" : [ "drain", "ditch" ], "layer" : "WATER",
+          "line" : { "color" : "#abd4e0", "width" : 0.03 }
+        },
+        {
+          "subtype" : "river", "layer" : "WATER",
+          "line" : { "color" : "#abd4e0", "width" : 0.08 }
+        },
+        {
+          "subtype" : "stream", "layer" : "WATER",
+          "line" : { "color" : "#abd4e0", "width" : 0.05 }
+        },
+        {
+          "subtype" : "canal", "layer" : "WATER",
+          "borderedLine" : { "innerColor" : "#abd4e0", "outerColor": "#7d9ba4", "innerWidth" : 0.08, "outerWidth" : 0.12 }
+        }
+      ]
+    },
+    {
+      "type" : "land",
+      "rules" : [
+        {
+          "subtype" : [ "wood", "forest" ], "layer" : "LAND-BG",
+          "patternedArea" : { "areaColor" : "#9dca8a", "patternColor" : "#6cb04f", "patternShape" : "needleleaved:broadleaved", "patternWidth" : 0.9, "patternHeight" : 0.9 }
+        },
+        {
+          "subtype" : "scrub", "layer" : "LAND",
+          "area" : { "color" : "#c9d8ad" }
+        },
+        {
+          "subtype" : "heath", "layer" : "LAND",
+          "area" : { "color" : "#d6d99f" }
+        },
+        {
+          "subtype" : [ "grassland", "fell" ], "layer" : "LAND",
+          "area" : { "color" : "#ceecb2" }
+        },
+        {
+          "subtype" : [ "bare_rock", "scree", "shingle" ], "layer" : "LAND",
+          "area" : { "color" : "#ede4dc" }
+        },
+        {
+          "subtype" : "sand", "layer" : "LAND",
+          "area" : { "color" : "#f0e5c2" }
+        },
+        {
+          "subtype" : [ "mud", "wetland" ], "layer" : "LAND",
+          "area" : { "color" : "#e7ddd3" }
+        },
+        {
+          "subtype" : "glacier", "layer" : "LAND",
+          "area" : { "color" : "#deeded" }
+        },
+        {
+          "subtype" : "beach", "layer" : "LAND",
+          "area" : { "color" : "#fff1bb" }
+        },
+        {
+          "subtype" : "commercial", "layer" : "LAND",
+          "area" : { "color" : "#eecfcf" }
+        },
+        {
+          "subtype" : "construction", "layer" : "LAND",
+          "area" : { "color" : "#c7c7b4" }
+        },
+        {
+          "subtype" : [ "industrial", "railway" ], "layer" : "LAND",
+          "area" : { "color" : "#e6d1e3" }
+        },
+        {
+          "subtype" : "residential", "layer" : "LAND",
+          "area" : { "color" : "#dadada" }
+        },
+        {
+          "subtype" : "retail", "layer" : "LAND",
+          "area" : { "color" : "#fecac5" }
+        },
+        {
+          "subtype" : "allotments", "layer" : "LAND",
+          "area" : { "color" : "#cae2c0" }
+        },
+        {
+          "subtype" : [ "brownfield", "landfill" ], "layer" : "LAND",
+          "area" : { "color" : "#b6b690" }
+        },
+        {
+          "subtype" : "cemetery", "layer" : "LAND",
+          "area" : { "color" : "#abccb0" }
+        },
+        {
+          "subtype" : [ "farmland", "greenhouse_horticulture" ], "layer" : "LAND",
+          "area" : { "color" : "#eff0d6" }
+        },
+        {
+          "subtype" : "farmyard", "layer" : "LAND",
+          "area" : { "color" : "#eacca4" }
+        },
+        {
+          "subtype" : "garages", "layer" : "LAND",
+          "area" : { "color" : "#deddcc" }
+        },
+        {
+          "subtype" : [ "grass", "recreation_ground" ], "layer" : "LAND",
+          "area" : { "color" : "#cfeda5" }
+        },
+        {
+          "subtype" : "greenfield", "layer" : "LAND",
+          "area" : { "color" : "#f1eee8" }
+        },
+        {
+          "subtype" : [ "meadow", "village_green" ], "layer" : "LAND",
+          "area" : { "color" : "#ceecb1" }
+        },
+        {
+          "subtype" : "military", "layer" : "LAND",
+          "area" : { "color" : "#f3e4de" }
+        },
+        {
+          "subtype" : "vineyard", "layer" : "LAND",
+          "patternedArea" : { "areaColor" : "#9edc90", "patternColor" : "#4dae37", "patternShape" : "grapeRect", "patternWidth" : 0.2, "patternHeight" : 0.16 }
+        },
+        {
+          "subtype" : "orchard", "layer" : "LAND",
+          "patternedArea" : { "areaColor" : "#9edc90", "patternColor" : "#4dae37", "patternShape" : "broadleaved", "patternWidth" : 0.22, "patternHeight" : 0.21 }
+        },
+        {
+          "subtype" : "plant_nursery", "layer" : "LAND",
+          "area" : { "color" : "#b0e1a5" }
+        },
+        {
+          "subtype" : "quarry", "layer" : "LAND",
+          "patternedArea" : { "areaColor" : "#b7b5b5", "patternColor" : "#d9d8d8", "patternShape" : "quarry", "patternWidth" : 0.6, "patternHeight" : 0.4 }
+        },
+        {
+          "subtype" : "religious", "layer" : "LAND",
+          "area" : { "color" : "#cecdca" }
+        },
+        {
+          "subtype" : "reservoir", "layer" : "LAND",
+          "area" : { "color" : "#abd4e0" }
+        }
+      ]
+    },
+    {
+      "type" : "poi",
+      "rules" : [
+        {
+          "subtype" : "peak", "layer" : "POI",
+          "symbol" : { "color" : "#000000", "shape" : "peak", "x" : -0.1, "y" : -0.1 }
+        },
+        {
+          "subtype" : "hill", "layer" : "POI",
+          "symbol" : { "color" : "#555555", "shape" : "peak", "x" : -0.1, "y" : -0.1 }
+        }
+      ]
+    }
+  ]
+}

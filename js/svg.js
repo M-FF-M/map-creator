@@ -16,7 +16,7 @@ const MapStyler = require('./mapstyler');
 
 /**
  * @typedef {object} FeatureCategory feature category object
- * @property {string} type one of 'water', 'land', 'road', 'railway', 'building'
+ * @property {string} type one of 'water', 'land', 'road', 'railway', 'building', 'poi'
  * @property {string} subtype many possible values inherited from OSM elements
  */
 
@@ -24,7 +24,7 @@ const MapStyler = require('./mapstyler');
  * @typedef {object} PathPoint point on a processed path
  * @property {number} x x-coordinate on the map
  * @property {number} y y-coordinate on the map
- * @property {string} connection connector; M for move and L for line
+ * @property {string} [connection] connector; M for move and L for line
  */
 
 /**
@@ -33,6 +33,7 @@ const MapStyler = require('./mapstyler');
  * @property {boolean} isArea whether this is an area feature
  * @property {boolean} isWay whether this feature presents a way / road / track / railway usable by humans
  * @property {boolean} isPath whether this is a path feature
+ * @property {boolean} isPoint whether this is a point feature (point of interest)
  * @property {boolean} isTunnel whether this is a path represents a tunnel
  * @property {boolean} isBridge whether this is a path represents a bridge
  * @property {boolean} isMultiPath whether the path consists of multiple paths and must be filled with the even-odd rule
@@ -126,26 +127,43 @@ class SVGRenderer {
    * @return {string} the corresponding SVG string
    */
   static getSVGText(data) {
-    const styler = new MapStyler(data.scale);
+    const styler = new MapStyler(data.scale, JSON.parse(Files.readFile('map-styles/development.json')),
+      JSON.parse(Files.readFile('map-styles/shapes.json')));
     let output = '';
+    let defstext = ''; let drawtext = ''; let defsid = 0; // defstext: in order to move paths drawn multiple times to <defs>
     output += `<svg version="1.1" viewBox="0 0 ${s(data.mapWidth)} ${s(data.mapHeight)}" width="${
-      s(data.mapWidth)}cm" height="${s(data.mapHeight)}cm" xmlns="http://www.w3.org/2000/svg">`;
-    output += `<rect width="100%" height="100%"${SVGRenderer.toAttribs(styler.getBackgroundStyle())}/>`;
+      s(data.mapWidth)}cm" height="${s(data.mapHeight)}cm" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">`;
+    drawtext += `<rect width="100%" height="100%"${SVGRenderer.toAttribs(styler.getBackgroundStyle())}/>`;
 
     const layers = [];
     for (let i = 0; i < styler.LAYER_NUM; i++)
       layers.push([]);
     for (let i = 0; i < data.features.length; i++) {
       const styles = styler.getPathStyle(data.features[i]);
+      if (!data.features[i].isPoint && styles.length >= 2 && data.features[i].path.length >= 4) {
+        const fcopy = { ...data.features[i] };
+        fcopy.isMultiPath = false;
+        defstext += SVGRenderer.getFeatureSVGText(fcopy, { id: `d${defsid++}` });
+      }
       for (let k = 0; k < styles.length; k++) {
-        layers[styles[k].layer].push(SVGRenderer.getFeatureSVGText(data.features[i], styles[k].style));
+        if (styles[k].layer < 0)
+          defstext += styles[k].defText;
+        else
+          layers[styles[k].layer].push( SVGRenderer.getFeatureSVGText(data.features[i], styles[k].style,
+            data.features[i].isPoint || (styles.length >= 2 && data.features[i].path.length >= 4),
+            data.features[i].isPoint ? styles[k].symbol : `d${defsid - 1}`,
+            data.features[i].isPoint,
+            styles[k].shift ? styles[k].shift : { x: 0, y : 0 }) );
       }
     }
     for (let l = 0; l < layers.length; l++) {
       for (let i = 0; i < layers[l].length; i++) {
-        output += layers[l][i];
+        drawtext += layers[l][i];
       }
     }
+    if (defstext.length > 0)
+      output += `<defs>${defstext}</defs>`;
+    output += drawtext;
     output += '</svg>';
 
     console.log(`SVG created (${Files.getSizeStr(output.length)}).`);
@@ -180,16 +198,26 @@ class SVGRenderer {
    * Convert a feature to a SVG path element
    * @param {ParsedFeature2} feature the map feature
    * @param {StyleObject} style the corresponding styling information
+   * @param {boolean} [useTag] if set to true, no <path> element but a <use> element will be created
+   * @param {string} [useId] if useTag is true, this should specify the id of the corresponding element in <defs>
+   * @param {boolean} [isPoint] whether this is a single point feature
+   * @param {PathPoint} [shift] feature shift
    * @return {string} the SVG path element as a string
    */
-  static getFeatureSVGText(feature, style) {
+  static getFeatureSVGText(feature, style, useTag = false, useId = '', isPoint = false, shift = { x: 0, y : 0 }) {
     if (!feature.draw)
       throw new Error('SVGRenderer.getFeatureSVGText(): only drawable features should be passed to this method!');
     
     let output = '';
-    output += '<path d="';
-    for (let i = 0; i < feature.path.length; i++)
-      output += `${feature.path[i].connection}${s(feature.path[i].x)} ${s(feature.path[i].y)}`;
+    if (!useTag) {
+      output += '<path d="';
+      for (let i = 0; i < feature.path.length; i++)
+        output += `${feature.path[i].connection}${s(feature.path[i].x + shift.x)} ${s(feature.path[i].y + shift.y)}`;
+    } else {
+      output += `<use xlink:href="#${useId}`;
+      if (isPoint)
+        output += `" x="${s(feature.path[0].x + shift.x)}" y="${s(feature.path[0].y + shift.y)}`
+    }
     output += `"${SVGRenderer.toAttribs(style)}${feature.isMultiPath ? ' fill-rule="evenodd"' : ''} />`;
     return output;
   }
